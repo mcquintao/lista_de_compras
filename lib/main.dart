@@ -14,7 +14,7 @@ void main() {
       ),
       home: const HomePage(),
       routes: {
-        '/new' :(context) => const NewItemPage(),
+        '/new': (context) => const NewItemPage(),
       },
     ),
   ));
@@ -56,6 +56,15 @@ class ShopListProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void changeCheckItem(Item item) {
+    for(Item element in _itemList) {
+      if (element == item) {
+        element.changeCheck();
+      }
+    }
+    notifyListeners();
+  }
+
   void removeItem(Item item) {
     _itemList.remove(item);
     notifyListeners();
@@ -73,8 +82,21 @@ class ShopListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(children: shopList.map((item) => Card(child: Text(item.name),)).toList(),),
+    return SizedBox(
+      height: 200,
+      child: ListView(
+        children: shopList
+            .map(
+              (item) => ListTile(
+                title: Text(item.name),
+                leading: const Icon(Icons.label),
+                trailing: Checkbox(value: item.isChecked, onChanged: (value) {
+                  context.read<ShopListProvider>().changeCheckItem(item);
+                },),
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }
@@ -88,18 +110,22 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Lista de compras'),
       ),
-      body: SafeArea(
-          child: Column(
+      body: Column(
         children: [
-          Consumer<ShopListProvider>(builder: (context, value, child) {
-            return ShopListWidget(shopList: value.list,);
-          },)
+      Consumer<ShopListProvider>(
+        builder: (context, value, child) {
+          return ShopListWidget(
+            shopList: value.list,
+          );
+        },
+      )
         ],
-      )),
-      floatingActionButton:
-          FloatingActionButton(onPressed: () {
+      ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
             Navigator.pushNamed(context, '/new');
-          }, child: const Icon(Icons.add)),
+          },
+          child: const Icon(Icons.add)),
     );
   }
 }
@@ -113,7 +139,6 @@ class NewItemPage extends StatefulWidget {
 
 class _NewItemPageState extends State<NewItemPage> {
   late final TextEditingController _controllerName;
-
 
   @override
   void initState() {
@@ -137,14 +162,15 @@ class _NewItemPageState extends State<NewItemPage> {
           controller: _controllerName,
           decoration: const InputDecoration(hintText: "Nomde do item"),
         ),
-        ElevatedButton(onPressed: () {
-          if(_controllerName.value.text.isNotEmpty) {
-            final Item item = Item(name: _controllerName.value.text);
-          context.read<ShopListProvider>().addItem(item);
-          print("clicou");
-          Navigator.of(context).pop();
-          }
-        }, child: const Text("Adicionar"))
+        ElevatedButton(
+            onPressed: () {
+              if (_controllerName.value.text.isNotEmpty) {
+                final Item item = Item(name: _controllerName.value.text);
+                context.read<ShopListProvider>().addItem(item);
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text("Adicionar"))
       ]),
     );
   }
